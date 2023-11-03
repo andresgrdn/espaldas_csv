@@ -18,6 +18,7 @@ class MyLayout(GridLayout):
         self.cols = 1
         self.data_layout = BoxLayout(
             orientation='horizontal')
+        self.actionbtns_layout = BoxLayout(orientation='horizontal')
 
         # global variables
         # espalda {name, number, size}
@@ -43,8 +44,9 @@ class MyLayout(GridLayout):
         self.exportar = Button(text="Exportar")
         self.agregar.bind(on_press=self.agregar_datos)
         self.exportar.bind(on_press=self.exportar_csv)
-        self.add_widget(self.agregar)
-        self.add_widget(self.exportar)
+        self.actionbtns_layout.add_widget(self.agregar)
+        self.actionbtns_layout.add_widget(self.exportar)
+        self.add_widget(self.actionbtns_layout)
 
         # Showcase
         self.labels_container = BoxLayout(
