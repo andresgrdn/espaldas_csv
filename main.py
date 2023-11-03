@@ -16,6 +16,7 @@ class MyLayout(GridLayout):
         super(MyLayout, self).__init__(**kwargs)
         # Layout conf
         self.cols = 1
+        self.inputs_layout = BoxLayout(orientation='horizontal')
         self.data_layout = BoxLayout(
             orientation='horizontal')
         self.actionbtns_layout = BoxLayout(orientation='horizontal')
@@ -29,11 +30,12 @@ class MyLayout(GridLayout):
         self.numero = TextInput(multiline=False, hint_text="Numero")
         self.nombre.bind(on_text_validate=self.cambiar_enfoque)
         self.numero.bind(on_text_validate=self.cambiar_enfoque)
+        self.inputs_layout.add_widget(self.nombre)
+        self.inputs_layout.add_widget(self.numero)
+        self.add_widget(self.inputs_layout)
         self.small = ToggleButton(text="small", group="tallas")
         self.medium = ToggleButton(text="medium", group="tallas", state='down')
         self.large = ToggleButton(text="large", group="tallas")
-        self.add_widget(self.nombre)
-        self.add_widget(self.numero)
         self.data_layout.add_widget(self.small)
         self.data_layout.add_widget(self.medium)
         self.data_layout.add_widget(self.large)
