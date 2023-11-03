@@ -83,13 +83,13 @@ class MyLayout(GridLayout):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        fieldnames = ['name', 'number']
+        fieldnames = ['Variable1', 'Variable2']
         for talla in ToggleButtonBehavior.get_widgets('tallas'):
             talla_str = talla.text.lower()
             csv_file = os.path.join(folder_path, f'espaldas_{talla_str}.csv')
 
             current_espaldas = [
-                {'name': espalda['name'], 'number': espalda['number']} for espalda in self.espaldas if espalda['size'] == talla_str]
+                {'Variable1': espalda['name'], 'Variable2': espalda['number']} for espalda in self.espaldas if espalda['size'] == talla_str]
             if len(current_espaldas) == 0:
                 continue
 
