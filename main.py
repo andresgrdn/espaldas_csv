@@ -103,12 +103,13 @@ class MyLayout(GridLayout):
     def reset_inputs(self):
         self.nombre.text = ""
         self.numero.text = ""
+        self.nombre.focus = True
 
     def cambiar_enfoque(self, instance):
         if instance == self.nombre:
             self.numero.focus = True
         elif instance == self.numero:
-            self.nombre.focus = True
+            self.agregar_datos({})
 
 
 class GenEspaldasApp(App):
