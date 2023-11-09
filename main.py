@@ -28,7 +28,9 @@ class MyLayout(GridLayout):
 
         # Data
         self.entrada = TextInput(
-            multiline=False, hint_text="Ingrese el nombre y el número")
+            multiline=False,
+            hint_text="Ingrese el nombre y el número",
+            focus=True)
         self.entrada.bind(on_text_validate=self.agregar_datos)
         self.inputs_layout.add_widget(self.entrada)
         self.add_widget(self.inputs_layout)
