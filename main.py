@@ -1,4 +1,5 @@
 from kivy.app import App
+from kivy.core.window import Window
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
@@ -9,12 +10,41 @@ from kivy.uix.button import Button
 import csv
 import os
 import re
+import pandas as pd
+
+from kivy.uix.popup import Popup
+
+
+class ConfirmPopup(Popup):
+    def __init__(self, title, message, callback_yes, callback_no, **kwargs):
+        super(ConfirmPopup, self).__init__(**kwargs)
+        self.title = title
+        self.content = BoxLayout(orientation='vertical')
+        self.size_hint_y = None
+        self.height = 180
+        self.content.add_widget(Button(
+            text=message,
+            size_hint_y=None,
+            height=40))
+        self.content.add_widget(Button(
+            text='Sí',
+            on_press=callback_yes,
+            size_hint_y=None,
+            height=40))
+        self.content.add_widget(Button(
+            text='No',
+            on_press=callback_no,
+            size_hint_y=None,
+            height=40))
 
 
 class MyLayout(GridLayout):
 
     def __init__(self, **kwargs):
         super(MyLayout, self).__init__(**kwargs)
+        # drag and drop
+        Window.bind(on_drop_file=self._on_file_drop)
+
         # Layout conf
         self.cols = 1
         self.inputs_layout = BoxLayout(orientation='horizontal')
@@ -25,12 +55,12 @@ class MyLayout(GridLayout):
         # global variables
         # espalda {name, number, size}
         self.espaldas = []
+        self.excel_path = ''
 
         # Data
         self.entrada = TextInput(
             multiline=False,
-            hint_text="Ingrese el nombre y el número",
-            focus=True)
+            hint_text="Ingrese el nombre y el número")
         self.entrada.bind(on_text_validate=self.agregar_datos)
         self.inputs_layout.add_widget(self.entrada)
         self.add_widget(self.inputs_layout)
@@ -100,6 +130,36 @@ class MyLayout(GridLayout):
                 for espalda in current_espaldas:
                     writer.writerow(espalda)
 
+    def exportar_csv_from_list(self, my_list):
+        # Obtén la ruta al escritorio
+        desktop_path = os.path.expanduser("~/Desktop")
+        folder_name = "espaldas"
+        folder_path = os.path.join(desktop_path, folder_name)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        fieldnames = ['Variable1', 'Variable2']
+
+        # Agrupar espaldas por talla
+        espaldas_por_talla = {}
+        for espalda in my_list:
+            talla_str = espalda['size'].lower()
+            if talla_str not in espaldas_por_talla:
+                espaldas_por_talla[talla_str] = []
+            espaldas_por_talla[talla_str].append(espalda)
+
+        # Escribir archivos CSV por cada talla
+        for talla_str, current_espaldas in espaldas_por_talla.items():
+            csv_file = os.path.join(folder_path, f'espaldas_{talla_str}.csv')
+
+            # Escribir los datos en el archivo CSV
+            with open(csv_file, 'w', newline='') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()  # Escribir las cabeceras
+                for espalda in current_espaldas:
+                    writer.writerow(
+                        {'Variable1': espalda['name'], 'Variable2': espalda['number']})
+
     def reset_inputs(self):
         self.entrada.text = ""
         self.entrada.focus = True
@@ -152,6 +212,44 @@ class MyLayout(GridLayout):
                 result[0] = copia_[i]
 
         return result
+
+    def _on_file_drop(self, window, file_path, x, y):
+        self.excel_path = file_path.decode('utf-8')
+        self.confirm_popup = ConfirmPopup(
+            title='Confirmación',
+            message=f'¿Procesar archivo {self.excel_path}?',
+            callback_yes=self.callback_yes,
+            callback_no=self.callback_no,
+        )
+        self.confirm_popup.open()
+
+    def callback_yes(self, instance):
+        print('Confirmado')
+        self.exportar_csv_from_list(self.process_excel(self.excel_path))
+        self.confirm_popup.dismiss()
+
+    def callback_no(self, instance):
+        print('Cancelado')
+
+    def process_excel(self, path):
+        archivo_excel = path
+        try:
+            datos_excel = pd.read_excel(archivo_excel, sheet_name=0)
+
+            lista_objetos = []
+            for index, row in datos_excel.iterrows():
+                objeto = {
+                    'name': row['name'].upper(),
+                    'number': row['number'],
+                    'size': row['size']
+                }
+                lista_objetos.append(objeto)
+
+            return lista_objetos
+            print(lista_objetos)
+
+        except Exception as err:
+            print(f"Unexpected {err=}, {type(err)=}")
 
 
 class GenEspaldasApp(App):
