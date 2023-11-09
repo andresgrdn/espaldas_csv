@@ -8,6 +8,7 @@ from kivy.uix.togglebutton import ToggleButtonBehavior
 from kivy.uix.button import Button
 import csv
 import os
+import re
 
 
 class MyLayout(GridLayout):
@@ -26,12 +27,10 @@ class MyLayout(GridLayout):
         self.espaldas = []
 
         # Data
-        self.nombre = TextInput(multiline=False, hint_text="Nombre")
-        self.numero = TextInput(multiline=False, hint_text="Numero")
-        self.nombre.bind(on_text_validate=self.cambiar_enfoque)
-        self.numero.bind(on_text_validate=self.cambiar_enfoque)
-        self.inputs_layout.add_widget(self.nombre)
-        self.inputs_layout.add_widget(self.numero)
+        self.entrada = TextInput(
+            multiline=False, hint_text="Ingrese el nombre y el número")
+        self.entrada.bind(on_text_validate=self.agregar_datos)
+        self.inputs_layout.add_widget(self.entrada)
         self.add_widget(self.inputs_layout)
         self.small = ToggleButton(text="small", group="tallas")
         self.medium = ToggleButton(text="medium", group="tallas", state='down')
@@ -57,8 +56,7 @@ class MyLayout(GridLayout):
 
     def agregar_datos(self, obj):
         espaldas = self.espaldas
-        name = self.nombre.text.upper()
-        number = self.numero.text
+        name, number = self.parse_text(self.entrada.text)
         size = ''
 
         for talla_btn in ToggleButtonBehavior.get_widgets('tallas'):
@@ -101,15 +99,57 @@ class MyLayout(GridLayout):
                     writer.writerow(espalda)
 
     def reset_inputs(self):
-        self.nombre.text = ""
-        self.numero.text = ""
-        self.nombre.focus = True
+        self.entrada.text = ""
+        self.entrada.focus = True
 
-    def cambiar_enfoque(self, instance):
-        if instance == self.nombre:
-            self.numero.focus = True
-        elif instance == self.numero:
-            self.agregar_datos({})
+    def parse_text(self, text):
+        """parse_text(str) -> (str, str|int)
+        Regresa el nombre y el número en el texto dado.
+
+        Ejemplo:
+        >>> parse_text("Paca 12")
+        ("Paca", 12)"""
+        pattern = re.compile(r'(\b\w+\b)?(?:.*?(\d+))?')
+        result_match = pattern.search(text)
+        result_group = self.ordenar_tupla(result_match.groups())
+
+        if result_match:
+            word = result_group[0].upper(
+            ) if result_group[0] != '' else "BORRAR"
+            number = result_group[1] if result_group[1] != '' else "BORRAR"
+
+            return word.upper(), number
+        else:
+            return "borrar", "borrar"
+
+    def ordenar_tupla(self, tupla):
+        result = ['', '']
+        copia_ = list(tupla)
+
+        # quita nones
+        for i in range(len(copia_)):
+            if copia_[i] == None:
+                copia_[i] = ''
+
+        # convertir si hay numero a numero, y lo guarda en el
+        # el indice 1:
+        for index in copia_:
+            try:
+                result[1] = int(index)
+                index_num = copia_.index(index)
+                palabra = copia_[0] if index_num else copia_[1]
+                result[0] = '' if palabra == None else palabra
+
+                return result
+            except (ValueError, TypeError):
+                continue
+
+        # si llega aqui no hay numeros y los nones son str vacios
+        for i in range(len(copia_)):
+            if not (copia_[i] == ''):
+                result[0] = copia_[i]
+
+        return result
 
 
 class GenEspaldasApp(App):
