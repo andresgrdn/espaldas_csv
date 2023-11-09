@@ -7,6 +7,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.togglebutton import ToggleButtonBehavior
 from kivy.uix.button import Button
+from kivy.uix.scrollview import ScrollView
 import csv
 import os
 import re
@@ -47,10 +48,19 @@ class MyLayout(GridLayout):
 
         # Layout conf
         self.cols = 1
-        self.inputs_layout = BoxLayout(orientation='horizontal')
+        self.size_hint_y = 1
+        self.inputs_layout = BoxLayout(
+            orientation='horizontal',
+            size_hint_y=0.5/3)
         self.data_layout = BoxLayout(
-            orientation='horizontal')
-        self.action_buttons_layout = BoxLayout(orientation='horizontal')
+            orientation='horizontal',
+            size_hint_y=0.5/3,
+            height=80)
+        self.action_buttons_layout = BoxLayout(
+            orientation='horizontal',
+            size_hint_y=0.5/3,
+            height=100)
+        self.scroll_view = ScrollView(size_hint=(1, 0.5), size=(400, 400))
 
         # global variables
         # espalda {name, number, size}
@@ -60,7 +70,12 @@ class MyLayout(GridLayout):
         # Data
         self.entrada = TextInput(
             multiline=False,
-            hint_text="Ingrese el nombre y el número")
+            hint_text="Ingrese el nombre y el número",
+            halign="center",
+            padding_y=20,
+            font_size=38,
+            size_hint_y=None,
+            height=100)
         self.entrada.bind(on_text_validate=self.agregar_datos)
         self.inputs_layout.add_widget(self.entrada)
         self.add_widget(self.inputs_layout)
@@ -73,8 +88,18 @@ class MyLayout(GridLayout):
         self.add_widget(self.data_layout)
 
         # Botones acción
-        self.agregar = Button(text="Agregar Espalda")
-        self.exportar = Button(text="Exportar")
+        self.agregar = Button(
+            text="Agregar Espalda",
+            # rgb(66, 245, 117)
+            background_color=(66/255, 245/255, 117/255, 1),
+            font_size=18,
+            bold=True,)
+        self.exportar = Button(
+            text="Exportar",
+            # rgb(66, 179, 245)
+            background_color=(66/255, 179/255, 245/255, 1),
+            font_size=18,
+            bold=True)
         self.agregar.bind(on_press=self.agregar_datos)
         self.exportar.bind(on_press=self.exportar_csv)
         self.action_buttons_layout.add_widget(self.agregar)
@@ -82,9 +107,13 @@ class MyLayout(GridLayout):
         self.add_widget(self.action_buttons_layout)
 
         # Showcase
-        self.labels_container = BoxLayout(
-            orientation='vertical', size_hint=(1, 0.5))
-        self.add_widget(self.labels_container)
+        self.labels_container = GridLayout(
+            cols=1,
+            size_hint=(1, None),
+            height=500,
+            spacing=10,)
+        self.scroll_view.add_widget(self.labels_container)
+        self.add_widget(self.scroll_view)
 
     def agregar_datos(self, obj):
         espaldas = self.espaldas
@@ -101,7 +130,13 @@ class MyLayout(GridLayout):
 
         # Showcase
         self.labels_container.add_widget(
-            Label(text=f"{espalda['name']} {espalda['number']} {espalda['size']}"))
+            Label(
+                text=f"{espalda['name']} {espalda['number']} {espalda['size']}",
+                font_size=18,
+                size_hint=(1, None),
+                height=40,
+                outline_color=(1, 1, 1, 1))
+        )
 
         self.reset_inputs()
 
