@@ -276,15 +276,18 @@ class MyLayout(GridLayout):
 
     def process_excel(self, path):
         archivo_excel = path
+        col_name_str = 'nombre'
+        col_number_str = 'numero'
+        col_size_str = 'talla'
         try:
             datos_excel = pd.read_excel(archivo_excel, sheet_name=0)
 
             lista_objetos = []
             for index, row in datos_excel.iterrows():
                 objeto = {
-                    'name': row['name'].upper(),
-                    'number': row['number'],
-                    'size': row['size']
+                    'name': row[col_name_str].upper(),
+                    'number': row[col_number_str],
+                    'size': row[col_size_str]
                 }
                 lista_objetos.append(objeto)
 
