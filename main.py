@@ -200,24 +200,32 @@ class MyLayout(GridLayout):
         self.entrada.focus = True
 
     def parse_text(self, text):
-        """parse_text(str) -> (str, str|int)
+        """parse_text(str) -> (str, str)
         Regresa el nombre y el número en el texto dado.
 
         Ejemplo:
         >>> parse_text("Paca 12")
-        ("Paca", 12)"""
-        pattern = re.compile(r'(\b\w+\b)?(?:.*?(\d+))?')
-        result_match = pattern.search(text)
-        result_group = self.ordenar_tupla(result_match.groups())
+        ("Paca", "12")
+        """
+        name_pattern = re.compile(
+            r'\b(?:[A-Za-záéíóúÁÉÍÓÚñÑ]+\d*|\d+[A-Za-záéíóúÁÉÍÓÚñÑ]+)(?:\s*[A-Za-záéíóúÁÉÍÓÚñÑ]+\d*\.)?\s*\b|\b(\d+)\s*([A-Za-záéíóúÁÉÍÓÚñÑ]+\d*\.)\s*\b')
 
-        if result_match:
-            word = result_group[0].upper(
-            ) if result_group[0] != '' else "BORRAR"
-            number = result_group[1] if result_group[1] != '' else "BORRAR"
+        number_pattern = re.compile(r'\b\d+(?:\.\d+)?\b')
 
-            return word.upper(), number
-        else:
-            return "borrar", "borrar"
+        name_result = name_pattern.search(text)
+        number_result = number_pattern.search(text)
+
+        name_result = name_result[0] if name_result else ''
+        number_result = number_result[0] if number_result else ''
+
+        name = name_result.upper(
+        ) if name_result != '' else 'BORRAR'
+        number = number_result if number_result != '' else "BORRAR"
+
+        name = name.strip()
+        number = number.strip()
+
+        return name, number
 
     def ordenar_tupla(self, tupla):
         result = ['', '']
