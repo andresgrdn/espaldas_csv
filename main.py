@@ -178,7 +178,7 @@ class MyLayout(GridLayout):
         # Agrupar espaldas por talla
         espaldas_por_talla = {}
         for espalda in my_list:
-            talla_str = espalda['size'].lower()
+            talla_str = str(espalda['size'])
             if talla_str not in espaldas_por_talla:
                 espaldas_por_talla[talla_str] = []
             espaldas_por_talla[talla_str].append(espalda)
@@ -193,7 +193,7 @@ class MyLayout(GridLayout):
                 writer.writeheader()  # Escribir las cabeceras
                 for espalda in current_espaldas:
                     writer.writerow(
-                        {'Variable1': espalda['name'], 'Variable2': espalda['number']})
+                        {'Variable1': espalda['name'], 'Variable2': f'{espalda["number"]:.0f}'})
 
     def reset_inputs(self):
         self.entrada.text = ""
