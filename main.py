@@ -12,6 +12,8 @@ import csv
 import os
 import re
 import pandas as pd
+import subprocess
+import platform
 
 from kivy.uix.popup import Popup
 
@@ -43,6 +45,13 @@ class MyLayout(GridLayout):
 
     def __init__(self, **kwargs):
         super(MyLayout, self).__init__(**kwargs)
+
+        self.salida_generador_carpeta = 'salida_del_generador'
+        self.salida_illustrator_carpeta = 'salida_de_illustrator'
+
+        self.abrir_carpeta_en_escritorio(self.salida_generador_carpeta)
+        self.abrir_carpeta_en_escritorio(self.salida_illustrator_carpeta)
+
         # drag and drop
         Window.bind(on_drop_file=self._on_file_drop)
 
@@ -100,10 +109,18 @@ class MyLayout(GridLayout):
             background_color=(66/255, 179/255, 245/255, 1),
             font_size=18,
             bold=True)
+        self.limpiar_salida_button = Button(
+            text='Limpiar carpetas',
+            background_color=(1, 0, 0, 1),
+            font_size=18,
+            bold=True
+        )
         self.agregar.bind(on_press=self.agregar_datos)
         self.exportar.bind(on_press=self.exportar_csv)
+        self.limpiar_salida_button.bind(on_press=self.callback_limpiar_carpeta)
         self.action_buttons_layout.add_widget(self.agregar)
         self.action_buttons_layout.add_widget(self.exportar)
+        self.action_buttons_layout.add_widget(self.limpiar_salida_button)
         self.add_widget(self.action_buttons_layout)
 
         # Showcase
@@ -143,7 +160,7 @@ class MyLayout(GridLayout):
     def exportar_csv(self, obj):
         # Obtén la ruta al carpeta
         desktop_path = os.path.expanduser("~/Desktop")
-        folder_name = "espaldas"
+        folder_name = self.salida_generador_carpeta
         folder_path = os.path.join(desktop_path, folder_name)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -151,7 +168,7 @@ class MyLayout(GridLayout):
         fieldnames = ['Variable1', 'Variable2']
         for talla in ToggleButtonBehavior.get_widgets('tallas'):
             talla_str = talla.text.lower()
-            csv_file = os.path.join(folder_path, f'espaldas_{talla_str}.csv')
+            csv_file = os.path.join(folder_path, f'{talla_str}_generada.csv')
 
             current_espaldas = [
                 {'Variable1': espalda['name'], 'Variable2': espalda['number']} for espalda in self.espaldas if espalda['size'] == talla_str]
@@ -168,7 +185,7 @@ class MyLayout(GridLayout):
     def exportar_csv_from_list(self, my_list):
         # Obtén la ruta al escritorio
         desktop_path = os.path.expanduser("~/Desktop")
-        folder_name = "espaldas"
+        folder_name = self.salida_generador_carpeta
         folder_path = os.path.join(desktop_path, folder_name)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -274,6 +291,26 @@ class MyLayout(GridLayout):
     def callback_no(self, instance):
         print('Cancelado')
 
+    def callback_limpiar_carpeta(self, instance):
+        sistema_operativo = platform.system()
+        if sistema_operativo == 'Windows':
+            ruta_escritorio = os.path.join(os.path.join(
+                os.environ['USERPROFILE']), 'Desktop')
+        elif sistema_operativo == 'Linux' or sistema_operativo == 'Darwin':
+            ruta_escritorio = os.path.join(
+                os.path.join(os.path.expanduser('~')), 'Desktop')
+        else:
+            print("Sistema operativo no compatible.")
+            return
+
+        ruta_carpeta_generada = os.path.join(
+            ruta_escritorio, self.salida_generador_carpeta)
+        ruta_carpeta_illustrator = os.path.join(
+            ruta_escritorio, self.salida_illustrator_carpeta)
+
+        self.borrar_archivos_en_carpeta(ruta_carpeta_generada)
+        self.borrar_archivos_en_carpeta(ruta_carpeta_illustrator)
+
     def process_excel(self, path):
         archivo_excel = path
         col_name_str = 'nombre'
@@ -296,6 +333,35 @@ class MyLayout(GridLayout):
 
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
+
+    def abrir_carpeta_en_escritorio(self, nombre_carpeta):
+        sistema_operativo = platform.system()
+        if sistema_operativo == 'Windows':
+            ruta_escritorio = os.path.join(os.path.join(
+                os.environ['USERPROFILE']), 'Desktop')
+        elif sistema_operativo == 'Linux' or sistema_operativo == 'Darwin':
+            ruta_escritorio = os.path.join(
+                os.path.join(os.path.expanduser('~')), 'Desktop')
+        else:
+            print("Sistema operativo no compatible.")
+            return
+
+        ruta_carpeta = os.path.join(ruta_escritorio, nombre_carpeta)
+
+        if not os.path.exists(ruta_carpeta):
+            os.makedirs(ruta_carpeta)
+
+        subprocess.Popen(['explorer' if sistema_operativo ==
+                         'Windows' else 'xdg-open', ruta_carpeta])
+
+    def borrar_archivos_en_carpeta(self, carpeta):
+        for archivo in os.listdir(carpeta):
+            ruta_completa = os.path.join(carpeta, archivo)
+            try:
+                if os.path.isfile(ruta_completa):
+                    os.remove(ruta_completa)
+            except Exception as e:
+                print(f"No se pudo eliminar {ruta_completa}: {e}")
 
 
 class GenEspaldasApp(App):
