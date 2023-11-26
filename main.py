@@ -3,6 +3,7 @@ from kivy.core.window import Window
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
+from kivy.uix.image import Image
 from kivy.uix.button import Button
 import csv
 import os
@@ -11,27 +12,9 @@ import subprocess
 import platform
 
 
-class ConfirmPopup(Popup):
-    def __init__(self, title, message, callback_yes, callback_no, **kwargs):
-        super(ConfirmPopup, self).__init__(**kwargs)
-        self.title = title
-        self.content = BoxLayout(orientation='vertical')
-        self.size_hint_y = None
-        self.height = 180
-        self.content.add_widget(Button(
-            text=message,
-            size_hint_y=None,
-            height=40))
-        self.content.add_widget(Button(
-            text='Sí',
-            on_press=callback_yes,
-            size_hint_y=None,
-            height=40))
-        self.content.add_widget(Button(
-            text='No',
-            on_press=callback_no,
-            size_hint_y=None,
-            height=40))
+class GenEspaldasApp(App):
+    def build(self):
+        return MyLayout()
 
 
 class MyLayout(GridLayout):
@@ -39,6 +22,7 @@ class MyLayout(GridLayout):
     def __init__(self, **kwargs):
         super(MyLayout, self).__init__(**kwargs)
 
+        self.excel_path = ''
         self.salida_generador_carpeta = 'salida_del_generador'
         self.salida_illustrator_carpeta = 'salida_de_illustrator'
 
@@ -51,21 +35,28 @@ class MyLayout(GridLayout):
         # Layout conf
         self.cols = 1
         self.size_hint_y = 1
+        self.drop_ui_layout = BoxLayout(
+            size_hint_y=0.75,
+            padding=50
+        )
         self.action_buttons_layout = BoxLayout(
             orientation='horizontal',
-            size_hint_y=0.5/3,
-            height=100)
+            size_hint_y=0.25
+        )
 
-        # global variables
-        # espalda {name, number, size}
-        self.excel_path = ''
+        # Drop inner layout
+        self.image = Image(
+            source='./assets/drag_and_drop.png',
+        )
+        self.drop_ui_layout.add_widget(self.image)
+        self.add_widget(self.drop_ui_layout)
 
         # Botones acción
         self.limpiar_salida_button = Button(
             text='Limpiar carpetas',
             background_color=(1, 0, 0, 1),
             font_size=18,
-            bold=True
+            bold=True,
         )
         self.limpiar_salida_button.bind(on_press=self.callback_limpiar_carpeta)
         self.action_buttons_layout.add_widget(self.limpiar_salida_button)
@@ -190,9 +181,27 @@ class MyLayout(GridLayout):
                 print(f"No se pudo eliminar {ruta_completa}: {e}")
 
 
-class GenEspaldasApp(App):
-    def build(self):
-        return MyLayout()
+class ConfirmPopup(Popup):
+    def __init__(self, title, message, callback_yes, callback_no, **kwargs):
+        super(ConfirmPopup, self).__init__(**kwargs)
+        self.title = title
+        self.content = BoxLayout(orientation='vertical')
+        self.size_hint_y = None
+        self.height = 180
+        self.content.add_widget(Button(
+            text=message,
+            size_hint_y=None,
+            height=40))
+        self.content.add_widget(Button(
+            text='Sí',
+            on_press=callback_yes,
+            size_hint_y=None,
+            height=40))
+        self.content.add_widget(Button(
+            text='No',
+            on_press=callback_no,
+            size_hint_y=None,
+            height=40))
 
 
 if __name__ == '__main__':
