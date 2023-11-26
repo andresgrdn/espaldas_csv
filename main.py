@@ -1,21 +1,14 @@
 from kivy.app import App
 from kivy.core.window import Window
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.textinput import TextInput
-from kivy.uix.togglebutton import ToggleButton
-from kivy.uix.togglebutton import ToggleButtonBehavior
+from kivy.uix.popup import Popup
 from kivy.uix.button import Button
-from kivy.uix.scrollview import ScrollView
 import csv
 import os
-import re
 import pandas as pd
 import subprocess
 import platform
-
-from kivy.uix.popup import Popup
 
 
 class ConfirmPopup(Popup):
@@ -58,131 +51,27 @@ class MyLayout(GridLayout):
         # Layout conf
         self.cols = 1
         self.size_hint_y = 1
-        self.inputs_layout = BoxLayout(
-            orientation='horizontal',
-            size_hint_y=0.5/3)
-        self.data_layout = BoxLayout(
-            orientation='horizontal',
-            size_hint_y=0.5/3,
-            height=80)
         self.action_buttons_layout = BoxLayout(
             orientation='horizontal',
             size_hint_y=0.5/3,
             height=100)
-        self.scroll_view = ScrollView(size_hint=(1, 0.5), size=(400, 400))
 
         # global variables
         # espalda {name, number, size}
-        self.espaldas = []
         self.excel_path = ''
 
-        # Data
-        self.entrada = TextInput(
-            multiline=False,
-            hint_text="Ingrese el nombre y el número",
-            halign="center",
-            padding_y=20,
-            font_size=38,
-            size_hint_y=None,
-            height=100)
-        self.entrada.bind(on_text_validate=self.agregar_datos)
-        self.inputs_layout.add_widget(self.entrada)
-        self.add_widget(self.inputs_layout)
-        self.small = ToggleButton(text="small", group="tallas")
-        self.medium = ToggleButton(text="medium", group="tallas", state='down')
-        self.large = ToggleButton(text="large", group="tallas")
-        self.data_layout.add_widget(self.small)
-        self.data_layout.add_widget(self.medium)
-        self.data_layout.add_widget(self.large)
-        self.add_widget(self.data_layout)
-
         # Botones acción
-        self.agregar = Button(
-            text="Agregar Espalda",
-            # rgb(66, 245, 117)
-            background_color=(66/255, 245/255, 117/255, 1),
-            font_size=18,
-            bold=True,)
-        self.exportar = Button(
-            text="Exportar",
-            # rgb(66, 179, 245)
-            background_color=(66/255, 179/255, 245/255, 1),
-            font_size=18,
-            bold=True)
         self.limpiar_salida_button = Button(
             text='Limpiar carpetas',
             background_color=(1, 0, 0, 1),
             font_size=18,
             bold=True
         )
-        self.agregar.bind(on_press=self.agregar_datos)
-        self.exportar.bind(on_press=self.exportar_csv)
         self.limpiar_salida_button.bind(on_press=self.callback_limpiar_carpeta)
-        self.action_buttons_layout.add_widget(self.agregar)
-        self.action_buttons_layout.add_widget(self.exportar)
         self.action_buttons_layout.add_widget(self.limpiar_salida_button)
         self.add_widget(self.action_buttons_layout)
 
-        # Showcase
-        self.labels_container = GridLayout(
-            cols=1,
-            size_hint=(1, None),
-            height=500,
-            spacing=10,)
-        self.scroll_view.add_widget(self.labels_container)
-        self.add_widget(self.scroll_view)
-
-    def agregar_datos(self, obj):
-        espaldas = self.espaldas
-        name, number = self.parse_text(self.entrada.text)
-        size = ''
-
-        for talla_btn in ToggleButtonBehavior.get_widgets('tallas'):
-            if talla_btn.state == 'down':
-                size = talla_btn.text.lower()
-                break
-
-        espalda = {'name': name, 'number': number, 'size': size}
-        espaldas.append(espalda)
-
-        # Showcase
-        self.labels_container.add_widget(
-            Label(
-                text=f"{espalda['name']} {espalda['number']} {espalda['size']}",
-                font_size=18,
-                size_hint=(1, None),
-                height=40,
-                outline_color=(1, 1, 1, 1))
-        )
-
-        self.reset_inputs()
-
-    def exportar_csv(self, obj):
-        # Obtén la ruta al carpeta
-        desktop_path = os.path.expanduser("~/Desktop")
-        folder_name = self.salida_generador_carpeta
-        folder_path = os.path.join(desktop_path, folder_name)
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-
-        fieldnames = ['Variable1', 'Variable2']
-        for talla in ToggleButtonBehavior.get_widgets('tallas'):
-            talla_str = talla.text.lower()
-            csv_file = os.path.join(folder_path, f'{talla_str}_generada.csv')
-
-            current_espaldas = [
-                {'Variable1': espalda['name'], 'Variable2': espalda['number']} for espalda in self.espaldas if espalda['size'] == talla_str]
-            if len(current_espaldas) == 0:
-                continue
-
-            # Escribir los datos en el archivo CSV
-            with open(csv_file, 'w', newline='') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()  # Escribir las cabeceras
-                for espalda in current_espaldas:
-                    writer.writerow(espalda)
-
-    def exportar_csv_from_list(self, my_list):
+    def exportar_csv_from_list(self, my_list: list[dict]) -> None:
         # Obtén la ruta al escritorio
         desktop_path = os.path.expanduser("~/Desktop")
         folder_name = self.salida_generador_carpeta
@@ -211,67 +100,6 @@ class MyLayout(GridLayout):
                 for espalda in current_espaldas:
                     writer.writerow(
                         {'Variable1': espalda['name'], 'Variable2': f'{espalda["number"]:.0f}'})
-
-    def reset_inputs(self):
-        self.entrada.text = ""
-        self.entrada.focus = True
-
-    def parse_text(self, text):
-        """parse_text(str) -> (str, str)
-        Regresa el nombre y el número en el texto dado.
-
-        Ejemplo:
-        >>> parse_text("Paca 12")
-        ("Paca", "12")
-        """
-        name_pattern = re.compile(
-            r'\b(?:[A-Za-záéíóúÁÉÍÓÚñÑ]+\d*|\d+[A-Za-záéíóúÁÉÍÓÚñÑ]+)(?:\s*[A-Za-záéíóúÁÉÍÓÚñÑ]+\d*\.)?\s*\b|\b(\d+)\s*([A-Za-záéíóúÁÉÍÓÚñÑ]+\d*\.)\s*\b')
-
-        number_pattern = re.compile(r'\b\d+(?:\.\d+)?\b')
-
-        name_result = name_pattern.search(text)
-        number_result = number_pattern.search(text)
-
-        name_result = name_result[0] if name_result else ''
-        number_result = number_result[0] if number_result else ''
-
-        name = name_result.upper(
-        ) if name_result != '' else 'BORRAR'
-        number = number_result if number_result != '' else "BORRAR"
-
-        name = name.strip()
-        number = number.strip()
-
-        return name, number
-
-    def ordenar_tupla(self, tupla):
-        result = ['', '']
-        copia_ = list(tupla)
-
-        # quita nones
-        for i in range(len(copia_)):
-            if copia_[i] == None:
-                copia_[i] = ''
-
-        # convertir si hay numero a numero, y lo guarda en el
-        # el indice 1:
-        for index in copia_:
-            try:
-                result[1] = int(index)
-                index_num = copia_.index(index)
-                palabra = copia_[0] if index_num else copia_[1]
-                result[0] = '' if palabra == None else palabra
-
-                return result
-            except (ValueError, TypeError):
-                continue
-
-        # si llega aqui no hay numeros y los nones son str vacios
-        for i in range(len(copia_)):
-            if not (copia_[i] == ''):
-                result[0] = copia_[i]
-
-        return result
 
     def _on_file_drop(self, window, file_path, x, y):
         self.excel_path = file_path.decode('utf-8')
@@ -311,14 +139,13 @@ class MyLayout(GridLayout):
         self.borrar_archivos_en_carpeta(ruta_carpeta_generada)
         self.borrar_archivos_en_carpeta(ruta_carpeta_illustrator)
 
-    def process_excel(self, path):
+    def process_excel(self, path: str) -> list[dict]:
         archivo_excel = path
         col_name_str = 'nombre'
         col_number_str = 'numero'
         col_size_str = 'talla'
         try:
             datos_excel = pd.read_excel(archivo_excel, sheet_name=0)
-
             lista_objetos = []
             for index, row in datos_excel.iterrows():
                 objeto = {
@@ -329,12 +156,11 @@ class MyLayout(GridLayout):
                 lista_objetos.append(objeto)
 
             return lista_objetos
-            print(lista_objetos)
 
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
 
-    def abrir_carpeta_en_escritorio(self, nombre_carpeta):
+    def abrir_carpeta_en_escritorio(self, nombre_carpeta: str):
         sistema_operativo = platform.system()
         if sistema_operativo == 'Windows':
             ruta_escritorio = os.path.join(os.path.join(
@@ -354,7 +180,7 @@ class MyLayout(GridLayout):
         subprocess.Popen(['explorer' if sistema_operativo ==
                          'Windows' else 'xdg-open', ruta_carpeta])
 
-    def borrar_archivos_en_carpeta(self, carpeta):
+    def borrar_archivos_en_carpeta(self, carpeta: str):
         for archivo in os.listdir(carpeta):
             ruta_completa = os.path.join(carpeta, archivo)
             try:
