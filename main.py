@@ -58,11 +58,11 @@ class MyLayout(GridLayout):
             font_size=18,
             bold=True,
         )
-        self.limpiar_salida_button.bind(on_press=self.callback_limpiar_carpeta)
+        self.limpiar_salida_button.bind(on_press=self.callback_empty_folder)
         self.action_buttons_layout.add_widget(self.limpiar_salida_button)
         self.add_widget(self.action_buttons_layout)
 
-    def exportar_csv_from_list(self, my_list: list[dict]) -> None:
+    def export_csv_from(self, my_list: list[dict]) -> None:
         # Obtén la ruta al escritorio
         desktop_path = os.path.expanduser("~/Desktop")
         folder_name = self.salida_generador_carpeta
@@ -80,9 +80,9 @@ class MyLayout(GridLayout):
                 espaldas_por_talla[talla_str] = []
             espaldas_por_talla[talla_str].append(espalda)
 
-        # Escribir archivos CSV por cada talla
+        # Escribir archivos CSV por talla
         for talla_str, current_espaldas in espaldas_por_talla.items():
-            csv_file = os.path.join(folder_path, f'espaldas_{talla_str}.csv')
+            csv_file = os.path.join(folder_path, f'{talla_str}.csv')
 
             # Escribir los datos en el archivo CSV
             with open(csv_file, 'w', newline='') as csvfile:
@@ -94,59 +94,46 @@ class MyLayout(GridLayout):
 
     def _on_file_drop(self, window, file_path, x, y):
         self.excel_path = file_path.decode('utf-8')
-        self.confirm_popup = ConfirmPopup(
-            title='Confirmación',
-            message=f'¿Procesar archivo {self.excel_path}?',
-            callback_yes=self.callback_yes,
-            callback_no=self.callback_no,
-        )
-        self.confirm_popup.open()
-
-    def callback_yes(self, instance):
         print('Confirmado')
-        self.exportar_csv_from_list(self.process_excel(self.excel_path))
-        self.confirm_popup.dismiss()
+        self.export_csv_from(self.parse_excel_file(self.excel_path))
 
-    def callback_no(self, instance):
-        print('Cancelado')
-
-    def callback_limpiar_carpeta(self, instance):
-        sistema_operativo = platform.system()
-        if sistema_operativo == 'Windows':
-            ruta_escritorio = os.path.join(os.path.join(
-                os.environ['USERPROFILE']), 'Desktop')
-        elif sistema_operativo == 'Linux' or sistema_operativo == 'Darwin':
-            ruta_escritorio = os.path.join(
-                os.path.join(os.path.expanduser('~')), 'Desktop')
+    def callback_empty_folder(self, instance):
+        os_name = platform.system()
+        if os_name == 'Windows':
+            desktop_path = os_name.path.join(os_name.path.join(
+                os_name.environ['USERPROFILE']), 'Desktop')
+        elif os_name == 'Linux' or os_name == 'Darwin':
+            desktop_path = os_name.path.join(
+                os_name.path.join(os_name.path.expanduser('~')), 'Desktop')
         else:
             print("Sistema operativo no compatible.")
             return
 
-        ruta_carpeta_generada = os.path.join(
-            ruta_escritorio, self.salida_generador_carpeta)
-        ruta_carpeta_illustrator = os.path.join(
-            ruta_escritorio, self.salida_illustrator_carpeta)
+        generator_folder_path = os_name.path.join(
+            desktop_path, self.salida_generador_carpeta)
+        illustrator_folder_path = os_name.path.join(
+            desktop_path, self.salida_illustrator_carpeta)
 
-        self.borrar_archivos_en_carpeta(ruta_carpeta_generada)
-        self.borrar_archivos_en_carpeta(ruta_carpeta_illustrator)
+        self.delete_files_in_folder(generator_folder_path)
+        self.delete_files_in_folder(illustrator_folder_path)
 
-    def process_excel(self, path: str) -> list[dict]:
-        archivo_excel = path
+    def parse_excel_file(self, path: str) -> list[dict]:
+        excel_file_path = path
         col_name_str = 'nombre'
         col_number_str = 'numero'
         col_size_str = 'talla'
         try:
-            datos_excel = pd.read_excel(archivo_excel, sheet_name=0)
-            lista_objetos = []
+            datos_excel = pd.read_excel(excel_file_path, sheet_name=0)
+            data_list = []
             for index, row in datos_excel.iterrows():
                 objeto = {
                     'name': row[col_name_str].upper(),
                     'number': row[col_number_str],
                     'size': row[col_size_str]
                 }
-                lista_objetos.append(objeto)
+                data_list.append(objeto)
 
-            return lista_objetos
+            return data_list
 
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
@@ -171,7 +158,7 @@ class MyLayout(GridLayout):
         subprocess.Popen(['explorer' if sistema_operativo ==
                          'Windows' else 'xdg-open', ruta_carpeta])
 
-    def borrar_archivos_en_carpeta(self, carpeta: str):
+    def delete_files_in_folder(self, carpeta: str):
         for archivo in os.listdir(carpeta):
             ruta_completa = os.path.join(carpeta, archivo)
             try:
