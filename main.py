@@ -127,7 +127,7 @@ class MyLayout(GridLayout):
             data_list = []
             for index, row in datos_excel.iterrows():
                 objeto = {
-                    'name': row[col_name_str].upper(),
+                    'name': str(row[col_name_str]).upper(),
                     'number': row[col_number_str],
                     'size': row[col_size_str]
                 }
