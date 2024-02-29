@@ -168,28 +168,6 @@ class MyLayout(GridLayout):
                 print(f"No se pudo eliminar {ruta_completa}: {e}")
 
 
-class ConfirmPopup(Popup):
-    def __init__(self, title, message, callback_yes, callback_no, **kwargs):
-        super(ConfirmPopup, self).__init__(**kwargs)
-        self.title = title
-        self.content = BoxLayout(orientation='vertical')
-        self.size_hint_y = None
-        self.height = 180
-        self.content.add_widget(Button(
-            text=message,
-            size_hint_y=None,
-            height=40))
-        self.content.add_widget(Button(
-            text='Sí',
-            on_press=callback_yes,
-            size_hint_y=None,
-            height=40))
-        self.content.add_widget(Button(
-            text='No',
-            on_press=callback_no,
-            size_hint_y=None,
-            height=40))
-
 
 if __name__ == '__main__':
     GenEspaldasApp().run()
