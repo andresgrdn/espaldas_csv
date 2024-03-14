@@ -26,8 +26,8 @@ class MyLayout(GridLayout):
         self.salida_generador_carpeta = 'salida_del_generador'
         self.salida_illustrator_carpeta = 'salida_de_illustrator'
 
-        self.abrir_carpeta_en_escritorio(self.salida_generador_carpeta)
-        self.abrir_carpeta_en_escritorio(self.salida_illustrator_carpeta)
+        self.open_folder(self.salida_generador_carpeta)
+        self.open_folder(self.salida_illustrator_carpeta)
 
         # drag and drop
         Window.bind(on_drop_file=self._on_file_drop)
@@ -62,7 +62,7 @@ class MyLayout(GridLayout):
         self.action_buttons_layout.add_widget(self.limpiar_salida_button)
         self.add_widget(self.action_buttons_layout)
 
-    def export_csv_from(self, my_list: list[dict]) -> None:
+    def export_csv(self, my_list: list[dict]) -> None:
         # Obtén la ruta al escritorio
         desktop_path = os.path.expanduser("~/Desktop")
         folder_name = self.salida_generador_carpeta
@@ -95,7 +95,7 @@ class MyLayout(GridLayout):
     def _on_file_drop(self, window, file_path, x, y):
         self.excel_path = file_path.decode('utf-8')
         print('Confirmado')
-        self.export_csv_from(self.parse_excel_file(self.excel_path))
+        self.export_csv(self.parse_excel_file(self.excel_path))
 
     def callback_empty_folder(self, instance):
         os_name = platform.system()
@@ -114,8 +114,8 @@ class MyLayout(GridLayout):
         illustrator_folder_path = os.path.join(
             desktop_path, self.salida_illustrator_carpeta)
 
-        self.delete_files_in_folder(generator_folder_path)
-        self.delete_files_in_folder(illustrator_folder_path)
+        self.empty_folder(generator_folder_path)
+        self.empty_folder(illustrator_folder_path)
 
     def parse_excel_file(self, path: str) -> list[dict]:
         excel_file_path = path
@@ -138,7 +138,7 @@ class MyLayout(GridLayout):
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
 
-    def abrir_carpeta_en_escritorio(self, nombre_carpeta: str):
+    def open_folder(self, nombre_carpeta: str):
         sistema_operativo = platform.system()
         if sistema_operativo == 'Windows':
             ruta_escritorio = os.path.join(os.path.join(
@@ -158,7 +158,7 @@ class MyLayout(GridLayout):
         subprocess.Popen(['explorer' if sistema_operativo ==
                          'Windows' else 'xdg-open', ruta_carpeta])
 
-    def delete_files_in_folder(self, carpeta: str):
+    def empty_folder(self, carpeta: str):
         for archivo in os.listdir(carpeta):
             ruta_completa = os.path.join(carpeta, archivo)
             try:
