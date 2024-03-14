@@ -100,18 +100,18 @@ class MyLayout(GridLayout):
     def callback_empty_folder(self, instance):
         os_name = platform.system()
         if os_name == 'Windows':
-            desktop_path = os_name.path.join(os_name.path.join(
-                os_name.environ['USERPROFILE']), 'Desktop')
+            desktop_path = os.path.join(os.path.join(
+                os.environ['USERPROFILE']), 'Desktop')
         elif os_name == 'Linux' or os_name == 'Darwin':
-            desktop_path = os_name.path.join(
-                os_name.path.join(os_name.path.expanduser('~')), 'Desktop')
+            desktop_path = os.path.join(
+                os.path.join(os_name.path.expanduser('~')), 'Desktop')
         else:
             print("Sistema operativo no compatible.")
             return
 
-        generator_folder_path = os_name.path.join(
+        generator_folder_path = os.path.join(
             desktop_path, self.salida_generador_carpeta)
-        illustrator_folder_path = os_name.path.join(
+        illustrator_folder_path = os.path.join(
             desktop_path, self.salida_illustrator_carpeta)
 
         self.delete_files_in_folder(generator_folder_path)
